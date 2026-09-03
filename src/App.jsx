@@ -15,8 +15,16 @@ export default function App() {
 
   // State'leri LocalStorage'dan başlatıyoruz
   const [step, setStep] = useState(() => loadState('tourney_step', 0));
-  // İleride lazım olacak teamsPerGroupToAdvance (Gruptan çıkacak takım sayısı) değerini de config'e şimdiden ekledik
-  const [config, setConfig] = useState(() => loadState('tourney_config', { format: 'groups', groupCount: 2, teamsPerGroup: 4, teamsPerGroupToAdvance: 2 }));
+  const [config, setConfig] = useState(() => loadState('tourney_config', { tourneyName: 'Halı Saha Turnuvası', format: 'groups', groupCount: 2, teamsPerGroup: 4, teamsPerGroupToAdvance: 2 }));
+  
+  // AÇILIŞ (SPLASH SCREEN) STATE'İ
+  const [showSplash, setShowSplash] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3500); // 3.5 saniye sonra kapanır
+    return () => clearTimeout(timer);
+  }, []);
   const [teams, setTeams] = useState(() => loadState('tourney_teams', []));
   const [matches, setMatches] = useState(() => loadState('tourney_matches', []));
   const [isDarkMode, setIsDarkMode] = useState(() => loadState('tourney_darkmode', false));
@@ -422,12 +430,24 @@ export default function App() {
 
   // --- RENDERERS ---
   const renderSetup = () => (
-    <div className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+    <div className="max-w-md mx-auto bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 transition-colors">
       <div className="flex items-center justify-center mb-6 text-green-600">
         <Settings className="w-12 h-12" />
       </div>
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Turnuva Ayarları</h2>
+      <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">Turnuva Ayarları</h2>
       <form onSubmit={handleConfigSubmit} className="space-y-6">
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Turnuva Adı</label>
+          <input 
+            type="text" 
+            required
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none dark:bg-gray-700 dark:text-white transition-colors font-bold"
+            value={config.tourneyName || ''} 
+            onChange={e => setConfig({ ...config, tourneyName: e.target.value })}
+            placeholder="Örn: Duruca Derneği 2. Turnuva"
+          />
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Turnuva Formatı</label>
           <div className="grid grid-cols-2 gap-4">
@@ -974,77 +994,91 @@ export default function App() {
         {/* --- GİZLİ PNG EXPORT TASARIMLARI (HTML2CANVAS İÇİN) --- */}
         <div className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none">
           
-          {/* 1. PUAN DURUMU EXPORT KARTI */}
-          <div ref={standingsExportRef} className="w-[850px] p-8 bg-gradient-to-br from-green-950 via-green-800 to-green-900 border-[16px] border-green-900/50 relative overflow-hidden" style={{ fontFamily: 'sans-serif' }}>
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-            {/* Saha çizgileri animasyonu hissiyatı veren statik grafikler */}
-            <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-white/20 -translate-y-1/2"></div>
-            <div className="absolute top-1/2 left-1/2 w-56 h-56 border-8 border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-            
-            <div className="relative z-10 flex flex-col gap-8">
-              <div className="text-center border-b-4 border-white/20 pb-6">
-                <h1 className="text-5xl font-black text-white drop-shadow-2xl mb-2 flex justify-center items-center gap-4 uppercase tracking-widest">
-                  <Trophy className="w-12 h-12 text-yellow-400" />
+          {/* 1. PROFESYONEL PUAN DURUMU EXPORT KARTI */}
+          <div ref={standingsExportRef} className="w-[900px] p-10 bg-gradient-to-tr from-[#064e3b] via-[#047857] to-[#065f46] border-[12px] border-[#022c22] shadow-2xl relative overflow-hidden" style={{ fontFamily: 'system-ui, sans-serif' }}>
+            {/* Çim dokusu ve saha deseni */}
+            <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <div className="absolute top-1/2 left-1/2 w-96 h-96 border-[6px] border-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+
+            <div className="relative z-10 flex flex-col gap-6">
+              {/* Header: Turnuva Adı ve Başlık */}
+              <div className="text-center bg-black/30 backdrop-blur-md p-6 rounded-2xl border border-white/10 shadow-inner">
+                <span className="text-yellow-400 font-extrabold tracking-[0.25em] text-sm uppercase block mb-1 drop-shadow">
+                  {config.tourneyName || 'HALI SAHA TURNUVASI'}
+                </span>
+                <h1 className="text-4xl font-black text-white tracking-wider uppercase flex justify-center items-center gap-3 drop-shadow-lg">
+                  <Trophy className="w-10 h-10 text-yellow-400" />
                   {config.format === 'league' ? 'LİG PUAN DURUMU' : `${String.fromCharCode(65 + activeGroupTab)} GRUBU PUAN DURUMU`}
                 </h1>
-                <p className="text-green-200 font-extrabold tracking-widest text-xl">{new Date().toLocaleDateString('tr-TR')} - Arena Yöneticisi</p>
+                <div className="mt-3 inline-block px-4 py-1 bg-white/10 rounded-full text-green-200 font-bold text-xs tracking-widest">
+                  {new Date().toLocaleDateString('tr-TR')} • Şahin Turnuva Platformu
+                </div>
               </div>
 
-              <table className="w-full text-white text-xl">
-                <thead className="border-b-4 border-white/30 text-green-200 uppercase tracking-widest text-base">
-                  <tr>
-                    <th className="py-4 text-left pl-2">Sıra</th>
-                    <th className="py-4 text-left">Takım</th>
-                    <th className="py-4 text-center">O</th>
-                    <th className="py-4 text-center">G</th>
-                    <th className="py-4 text-center">B</th>
-                    <th className="py-4 text-center">M</th>
-                    <th className="py-4 text-center">AG</th>
-                    <th className="py-4 text-center">YG</th>
-                    <th className="py-4 text-center">AV</th>
-                    <th className="py-4 text-center text-yellow-400 font-black text-2xl">P</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {standings[activeGroupTab]?.map((team, idx) => (
-                    <tr key={`export-st-${team.id}`} className="border-b border-white/10 bg-black/20">
-                      <td className="py-5 px-2 font-black text-center w-16">
-                        <span className={`w-10 h-10 rounded-full inline-flex items-center justify-center text-lg ${idx === 0 ? 'bg-yellow-400 text-black shadow-[0_0_15px_rgba(250,204,21,0.5)]' : idx < config.teamsPerGroupToAdvance && config.format === 'groups' ? 'bg-blue-400 text-black' : 'bg-white/20 text-white'}`}>
-                          {idx + 1}
-                        </span>
-                      </td>
-                      <td className="py-5 font-black text-2xl tracking-wide">{team.name}</td>
-                      <td className="py-5 text-center font-bold">{team.played}</td>
-                      <td className="py-5 text-center font-bold">{team.won}</td>
-                      <td className="py-5 text-center font-bold">{team.drawn}</td>
-                      <td className="py-5 text-center font-bold">{team.lost}</td>
-                      <td className="py-5 text-center font-bold">{team.gf}</td>
-                      <td className="py-5 text-center font-bold">{team.ga}</td>
-                      <td className="py-5 text-center font-black text-green-300">{team.gd > 0 ? `+${team.gd}` : team.gd}</td>
-                      <td className="py-5 text-center font-black text-3xl text-yellow-400 bg-white/5">{team.points}</td>
+              {/* Tablo Kartı */}
+              <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/10 shadow-2xl overflow-hidden">
+                <table className="w-full text-white">
+                  <thead>
+                    <tr className="border-b-2 border-white/20 text-green-300 text-sm font-black uppercase tracking-wider">
+                      <th className="py-3 px-3 text-left w-16">Sıra</th>
+                      <th className="py-3 px-3 text-left">Takım Adı</th>
+                      <th className="py-3 px-2 text-center w-12">O</th>
+                      <th className="py-3 px-2 text-center w-12">G</th>
+                      <th className="py-3 px-2 text-center w-12">B</th>
+                      <th className="py-3 px-2 text-center w-12">M</th>
+                      <th className="py-3 px-2 text-center w-14">AG</th>
+                      <th className="py-3 px-2 text-center w-14">YG</th>
+                      <th className="py-3 px-2 text-center w-14">AV</th>
+                      <th className="py-3 px-3 text-center w-16 text-yellow-400">P</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 font-bold text-lg">
+                    {standings[activeGroupTab]?.map((team, idx) => (
+                      <tr key={`pro-st-${team.id}`} className="hover:bg-white/5 transition-colors">
+                        <td className="py-4 px-3 text-left">
+                          <span className={`w-8 h-8 rounded-lg inline-flex items-center justify-center text-sm font-black ${idx === 0 ? 'bg-yellow-400 text-black shadow-lg' : idx < config.teamsPerGroupToAdvance && config.format === 'groups' ? 'bg-blue-500 text-white' : 'bg-white/10 text-white'}`}>
+                            {idx + 1}
+                          </span>
+                        </td>
+                        <td className="py-4 px-3 font-black text-xl tracking-wide truncate max-w-[220px]">{team.name}</td>
+                        <td className="py-4 px-2 text-center text-gray-200">{team.played}</td>
+                        <td className="py-4 px-2 text-center text-green-400">{team.won}</td>
+                        <td className="py-4 px-2 text-center text-gray-300">{team.drawn}</td>
+                        <td className="py-4 px-2 text-center text-red-400">{team.lost}</td>
+                        <td className="py-4 px-2 text-center text-gray-200">{team.gf}</td>
+                        <td className="py-4 px-2 text-center text-gray-200">{team.ga}</td>
+                        <td className="py-4 px-2 text-center font-black text-emerald-300">{team.gd > 0 ? `+${team.gd}` : team.gd}</td>
+                        <td className="py-4 px-3 text-center font-black text-2xl text-yellow-400 bg-white/5 rounded-lg">{team.points}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
-          {/* 2. FİKSTÜR EXPORT KARTI */}
-          <div ref={fixtureExportRef} className="w-[850px] p-8 bg-gradient-to-br from-green-950 via-green-800 to-green-900 border-[16px] border-green-900/50 relative overflow-hidden" style={{ fontFamily: 'sans-serif' }}>
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-            <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-white/20 -translate-y-1/2"></div>
-            <div className="absolute top-1/2 left-1/2 w-56 h-56 border-8 border-white/20 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-            
-            <div className="relative z-10 flex flex-col gap-8">
-              <div className="text-center border-b-4 border-white/20 pb-6">
-                <h1 className="text-5xl font-black text-white drop-shadow-2xl mb-2 flex justify-center items-center gap-4">
-                  <Calendar className="w-12 h-12 text-yellow-400" />
+          {/* 2. PROFESYONEL FİKSTÜR EXPORT KARTI */}
+          <div ref={fixtureExportRef} className="w-[900px] p-10 bg-gradient-to-tr from-[#064e3b] via-[#047857] to-[#065f46] border-[12px] border-[#022c22] shadow-2xl relative overflow-hidden" style={{ fontFamily: 'system-ui, sans-serif' }}>
+            <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <div className="absolute top-1/2 left-1/2 w-96 h-96 border-[6px] border-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+
+            <div className="relative z-10 flex flex-col gap-6">
+              {/* Header */}
+              <div className="text-center bg-black/30 backdrop-blur-md p-6 rounded-2xl border border-white/10 shadow-inner">
+                <span className="text-yellow-400 font-extrabold tracking-[0.25em] text-sm uppercase block mb-1 drop-shadow">
+                  {config.tourneyName || 'HALI SAHA TURNUVASI'}
+                </span>
+                <h1 className="text-4xl font-black text-white tracking-wider uppercase flex justify-center items-center gap-3 drop-shadow-lg">
+                  <Calendar className="w-10 h-10 text-yellow-400" />
                   {activeWeekTab}. HAFTA FİKSTÜRÜ
                 </h1>
-                <p className="text-green-200 font-extrabold tracking-widest text-xl uppercase">{config.format === 'groups' ? String.fromCharCode(65 + activeGroupTab) + ' GRUBU' : 'LİG'} - ARENA YÖNETİCİSİ</p>
+                <div className="mt-3 inline-block px-4 py-1 bg-white/10 rounded-full text-green-200 font-bold text-xs tracking-widest uppercase">
+                  {config.format === 'groups' ? String.fromCharCode(65 + activeGroupTab) + ' GRUBU' : 'LİG ETABI'} • Turnuva
+                </div>
               </div>
 
-              <div className="flex flex-col gap-5">
+              {/* Maç Kartları Listesi */}
+              <div className="flex flex-col gap-3">
                 {matches
                   .filter(m => m.groupId === activeGroupTab && m.week === activeWeekTab)
                   .map((match) => {
@@ -1052,16 +1086,18 @@ export default function App() {
                     const awayTeam = match.awayId === 'BAY' ? { name: 'BAY GEÇTİ' } : teams.find(t => t.id === match.awayId);
                     
                     return (
-                      <div key={`export-fix-${match.id}`} className="flex items-center justify-between bg-black/40 p-6 rounded-2xl border-l-8 border-yellow-400 shadow-[0_8px_30px_rgb(0,0,0,0.3)]">
-                        <div className="flex-1 text-right font-black text-3xl text-white pr-8 tracking-wide">
+                      <div key={`pro-fix-${match.id}`} className="flex items-center justify-between bg-black/40 backdrop-blur-md px-8 py-5 rounded-2xl border border-white/10 shadow-xl relative overflow-hidden">
+                        <div className="absolute left-0 top-0 bottom-0 w-2 bg-yellow-400"></div>
+                        
+                        <div className="flex-1 text-right font-black text-2xl text-white pr-6 tracking-wide truncate">
                           {homeTeam?.name || '???'}
                         </div>
                         
-                        <div className="flex items-center justify-center shrink-0 w-40 bg-white/10 border border-white/10 rounded-xl py-4">
+                        <div className="flex items-center justify-center shrink-0 w-36 bg-white/10 border border-white/10 rounded-xl py-2.5">
                            {match.isBay ? (
-                              <span className="text-yellow-400 font-black text-2xl tracking-widest uppercase drop-shadow-md">BAY</span>
+                              <span className="text-yellow-400 font-black text-lg tracking-widest uppercase">BAY</span>
                            ) : (
-                              <div className="flex gap-4 text-4xl font-black text-white drop-shadow-lg">
+                              <div className="flex gap-3 text-3xl font-black text-white">
                                 <span>{match.homeScore !== '' ? match.homeScore : '-'}</span>
                                 <span className="text-white/30">:</span>
                                 <span>{match.awayScore !== '' ? match.awayScore : '-'}</span>
@@ -1069,7 +1105,7 @@ export default function App() {
                            )}
                         </div>
 
-                        <div className="flex-1 text-left font-black text-3xl text-white pl-8 tracking-wide">
+                        <div className="flex-1 text-left font-black text-2xl text-white pl-6 tracking-wide truncate">
                           {awayTeam?.name || '???'}
                         </div>
                       </div>
@@ -1124,6 +1160,39 @@ export default function App() {
   return (
     <div className={`min-h-screen font-sans p-4 md:p-8 transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-slate-50 text-gray-900'}`}>
       
+      {/* ŞIK YEŞİLLİ KUPA AÇILIŞ (SPLASH) EKRANI */}
+      {showSplash && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-tr from-green-950 via-green-800 to-green-900 text-white p-6">
+          <style>{`
+            @keyframes pulseGlow {
+              0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(234, 179, 8, 0.6)); }
+              50% { transform: scale(1.08); filter: drop-shadow(0 0 35px rgba(234, 179, 8, 0.9)); }
+            }
+            .animate-glow { animation: pulseGlow 2s ease-in-out infinite; }
+          `}</style>
+          
+          <div className="bg-black/20 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 shadow-2xl flex flex-col items-center max-w-sm w-full text-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px]"></div>
+            
+            <div className="animate-glow mb-6 relative z-10">
+              <Trophy className="w-28 h-28 text-yellow-400" />
+            </div>
+            
+            <h1 className="text-3xl font-black tracking-wider uppercase mb-2 relative z-10 text-white drop-shadow-md">
+              SahaKralı
+            </h1>
+            <p className="text-green-200 text-sm font-bold tracking-widest uppercase mb-8 relative z-10 opacity-80">
+              Şampiyonların Sahası
+            </p>
+
+            {/* Yüklenme Çubuğu */}
+            <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden relative z-10">
+              <div className="bg-yellow-400 h-full rounded-full animate-[pulse_1s_infinite]" style={{ width: '100%' }}></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Gece Modu Değiştirme Butonu */}
       <button 
         onClick={() => setIsDarkMode(!isDarkMode)} 
@@ -1148,9 +1217,9 @@ export default function App() {
       {/* Header */}
       <header className="max-w-7xl mx-auto mb-8 text-center">
         <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600 mb-2">
-          Arena Yöneticisi
+          SahaKralı
         </h1>
-        <p className="text-gray-500 font-medium">Profesyonel Halı Saha Turnuva Yönetim Sistemi</p>
+        <p className="text-gray-500 font-medium">Profesyonel Halı Saha Turnuva ve Lig Platformu</p>
       </header>
 
       {/* Main Content Area */}

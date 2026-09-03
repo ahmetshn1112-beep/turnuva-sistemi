@@ -1,0 +1,17 @@
+{
+  "name": "Arena Yöneticisi Halı Saha Turnuvası",
+  "short_name": "Turnuva",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#064e3b",
+  "theme_color": "#166534",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
